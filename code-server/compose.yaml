@@ -13,6 +13,8 @@ services:
     networks:
       - proxy
       - backend
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       TZ: America/Los_Angeles
       UMASK: "002"
