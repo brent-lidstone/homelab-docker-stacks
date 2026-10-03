@@ -1,0 +1,65 @@
+# FOR VULKAN
+
+# This adds the intel iGPU as well as the Nvidia GPU.
+# If the model cannot fit in the GPU and it offloads some layers,
+# it will offload them to the system memory. Default llama.cpp behavior
+# is to do the computing on these layers with the CPU. This setup
+# will instead utilize the iGPU inside of the CPU for that compute.
+# We must use Vulkan drivers to facilitate this.
+
+# If there happens to be an iGPU, then this is overall preferable when the
+# goal is to run models that are too large to fit on the GPU VRAM.
+# The standard way of offloading to the CPU can result in extremely high
+# CPU usage. That chokes the CPU and makes the server unresponsive.
+# Offloading this work to the iGPU prevents this work from slamming the CPU.
+# It also requires less power and generates less heat.
+
+# However, the tradeoff is that switching to Vulkan results in a noticable
+# speed drop compared to the native CUDA drivers on the GPU. But without Vulkan,
+# its not very feasible to run larger models which cannot fit on the GPU.
+# The Vulkan drivers allow the offloading compute to be done by the iGPU
+# instead of the CPU, keeping the server responsive. You're accepting
+# a speed drop in exchange for a way to run much larger models without
+# choking the server.
+    
+services:
+  llama:
+    image: ghcr.io/ggml-org/llama.cpp:server-vulkan
+    container_name: llama-cpp
+    restart: unless-stopped
+
+    ports:
+      - "8080:${PORT}"
+
+    volumes:
+      - ${DATA_DIR}:/models
+    
+    devices:
+      - /dev/dri:/dev/dri
+
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+    command:
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8080"
+      - "--models-dir"
+      - "/models"
+      - "--models-max"
+      - "1"
+      - "--ctx-size"
+      - "4096"
+      - "--n-gpu-layers"
+      - "999"
+      - "--split-mode"
+      - "layer"
+      - "--load-mode"
+      - "mmap+mlock"

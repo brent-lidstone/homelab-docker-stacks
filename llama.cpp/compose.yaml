@@ -1,0 +1,37 @@
+services:
+  llama:
+    build:
+      context: https://github.com/ggml-org/llama.cpp.git
+      dockerfile: .devops/cuda.Dockerfile
+      target: server
+      # 12.4.1 is needed to run on the GTX 1070 using driver 550
+      args:
+        CUDA_VERSION: "12.4.1"
+        UBUNTU_VERSION: "22.04"
+        GCC_VERSION: "12"
+    container_name: llama-cpp
+    restart: unless-stopped
+    ports:
+      - "${PORT}:8080"
+    volumes:
+      - ${DATA_DIR}:/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    command:
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8080"
+      - "--models-dir"
+      - "/models"
+      - "--models-max"
+      - "1"
+      - "--ctx-size"
+      - "16384"
+      - "--n-gpu-layers"
+      - "99"
