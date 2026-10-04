@@ -13,8 +13,16 @@ services:
     restart: unless-stopped
     ports:
       - "${PORT}:8080"
+    environment:
+      LLAMA_ARG_HOST: "0.0.0.0"
+      LLAMA_ARG_PORT: "8080"
+      LLAMA_ARG_MODELS_DIR: "/models"
+      LLAMA_ARG_MODELS_PRESET: "/config/models.ini"
+      LLAMA_ARG_MODELS_MAX: "${MODELS_MAX}"
+      LLAMA_ARG_LOG_VERBOSITY: "${LOG_VERBOSITY}"
     volumes:
       - ${DATA_DIR}:/models
+      - ./models.ini:/config/models.ini:ro
     deploy:
       resources:
         reservations:
@@ -22,16 +30,3 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
-    command:
-      - "--host"
-      - "0.0.0.0"
-      - "--port"
-      - "8080"
-      - "--models-dir"
-      - "/models"
-      - "--models-max"
-      - "1"
-      - "--ctx-size"
-      - "16384"
-      - "--n-gpu-layers"
-      - "99"

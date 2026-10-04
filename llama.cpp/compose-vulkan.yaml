@@ -63,3 +63,6 @@ services:
       - "layer"
       - "--load-mode"
       - "mmap+mlock"
+      # uncomment these for MoE models:
+      - "--n-cpu-moe"
+      - "8" # Explicitly offloads 8 MoE expert blocks to system RAM
