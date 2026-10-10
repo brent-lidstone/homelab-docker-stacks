@@ -17,7 +17,7 @@ services:
       timeout: 5s
 
   beszel-agent:
-    image: henrygd/beszel-agent:latest
+    image: henrygd/beszel-agent-nvidia
     container_name: beszel-agent
     restart: unless-stopped
     network_mode: host
@@ -26,10 +26,19 @@ services:
       - ${DATA_DIR}/beszel_socket:/beszel_socket
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
+      GPU_COLLECTOR: nvml
       LISTEN: /beszel_socket/beszel.sock
       HUB_URL: http://localhost:${WEB_UI_PORT}
       KEY: ${KEY}
       TOKEN: ${TOKEN}
+      # NVIDIA_DRIVER_CAPABILITIES: "all"
     healthcheck:
       test: ['CMD', '/agent', 'health']
       interval: 120s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [utility]
